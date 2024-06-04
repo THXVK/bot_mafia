@@ -1,18 +1,33 @@
-import asyncio
-
-from aiogram import Bot, Dispatcher
+from aiogram import Router
+from aiogram.filters import Command, CommandStart
 from aiogram.types import Message
 
-from config import TOKEN
+from data import add_new_user
 
-bot = Bot(TOKEN)
-dp = Dispatcher()
+router = Router()
 
 
-@dp.message()
+@router.message(CommandStart())
 async def start_message(message: Message):
-    await message.answer('привет! ')
+    if res := await add_new_user(0, message.from_user.id)
+        await message.answer('добро пожаловать!')
+    else:
+        await message.answer('вы уже в базе')
 
 
-if __name__ == '__main__':
-    asyncio.run(dp.start_polling(bot))
+
+# @router.message(Command('join'))
+# async def join_register(message: Message):
+#     if is_user_in_table():
+#         if ...:
+#             ...
+#         elif ...:
+#             ...
+#         else:
+#             ...
+#             await message.reply('вы приняты!')
+#     else:
+#         await message.reply('напиши мне в лс команду "/start"')
+#
+
+
