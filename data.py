@@ -7,7 +7,7 @@ from log import logger
 # endregion
 
 
-def create_db():
+async def create_db():
     connection = sqlite3.connect('sqlite3.db')
     connection.close()
 
@@ -106,6 +106,3 @@ async def get_table_data():
         res = []
     return res
 # endregion
-
-create_db()
-create_users_data_table()

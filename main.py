@@ -1,4 +1,6 @@
 import asyncio
+
+from data import create_users_data_table, create_db
 from log import logger
 
 from aiogram import Bot, Dispatcher
@@ -16,4 +18,6 @@ async def main():
 
 
 if __name__ == '__main__':
+    asyncio.run(create_db())
+    asyncio.run(create_users_data_table())
     asyncio.run(main())
