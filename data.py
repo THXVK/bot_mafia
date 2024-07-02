@@ -1,5 +1,5 @@
 import sqlite3
-from config import DB_NAME
+from config import DB_NAME, DEFAULT_MAFIAS_NUM, DEFAULT_PLAYERS_NUM
 from log import logger
 
 
@@ -32,31 +32,67 @@ async def execute_query(func_name: str, query: str, data: tuple | None = None, d
         connection.close()
         return result
 
+# region sessions_table
 
-# region user_db
 
+async def create_sessions_data_table():
+    # только активные игры
+    sql_query = (
+        "CREATE TABLE IF NOT EXISTS sessions_data "
+        "(session_id INTEGER PRIMARY KEY, "
+        "group_id INTEGER, "  # уникальное значение (начинается с -)
+        "players_num INTEGER, "
+        "mafias_num INTEGER, "
+        "is_started INTEGER, "
+        "banned_roles TEXT);"
+    )
+    await execute_query('create_users_data_table', sql_query)
+
+
+async def add_new_session(group_id):
+    sql_query = (
+        f"INSERT INTO sessions_data "
+        f"(group_id, players_num, mafias_num, is_started) "
+        f"VALUES (?, {DEFAULT_PLAYERS_NUM}, {DEFAULT_MAFIAS_NUM}, 0);"
+    )
+    await execute_query('add_new_session', sql_query, (group_id, ))
+
+
+async def get_session_data(session_id: int):
+    sql_query = (
+            f'SELECT * '
+            f'FROM sessions_data '
+            f'WHERE session_id = {session_id};'
+    )
+    row = await execute_query('get_session_data', sql_query)
+    return row
+# endregion
+
+
+# region users_table
 
 async def create_users_data_table():
     sql_query = (
         "CREATE TABLE IF NOT EXISTS users_data "
         "(id INTEGER PRIMARY KEY, "
-        "session_id INTEGER, "
+        "group_id INTEGER, "
         "user_id INTEGER, "
-        "alive INTEGER, "
-        "role TEXT);"
+        "is_alive INTEGER, "
+        "role TEXT, "
+        "is_vip INTEGER);"
     )
     await execute_query('create_users_data_table', sql_query)
 
 
 async def add_new_user(session_id: int, user_id: int) -> bool:
-    if not is_user_in_table(user_id):
+    if not await is_user_in_table(user_id):
         sql_query = (
             "INSERT INTO users_data "
-            "(session_id, user_id, alive, role) "
-            "VALUES (?, ?, 0, guest);"
+            "(group_id, user_id, is_alive, role, is_vip) "
+            "VALUES (?, ?, 0, ?, 0);"
         )
 
-        await execute_query('add_new_user', sql_query, (session_id, user_id))
+        await execute_query('add_new_user', sql_query, (session_id, user_id, 'guest'))
         return True
     else:
         return False
@@ -68,11 +104,12 @@ async def is_user_in_table(user_id: int) -> bool:
         'FROM users_data '
         'WHERE user_id = ?;'
     )
-    return bool(execute_query('is_user_in_table', sql_query, (user_id,)))
+
+    return bool(await execute_query('is_user_in_table', sql_query, (user_id,)))
 
 
 async def get_user_data(user_id: int):
-    if is_user_in_table(user_id):
+    if await is_user_in_table(user_id):
         sql_query = (
             f'SELECT * '
             f'FROM users_data '
@@ -83,7 +120,7 @@ async def get_user_data(user_id: int):
 
 
 async def update_row(user_id: int, column_name: str, new_value: str | int | None) -> bool:
-    if is_user_in_table(user_id):
+    if await is_user_in_table(user_id):
         sql_query = (
             f"UPDATE users_data "
             f"SET {column_name} = ? "
