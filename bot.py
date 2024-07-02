@@ -2,8 +2,9 @@ from aiogram import F, Router, Bot
 from aiogram.filters import Command, CommandStart
 from aiogram.types import Message, CallbackQuery
 
-from config import TOKEN, DEFAULT_PLAYERS_NUM
-from data import add_new_user, add_new_session, is_user_in_table, update_row
+from config import TOKEN, DEFAULT_PLAYERS_NUM, MAX_PLAYERS_NUM
+from data import add_new_user, add_new_session, is_user_in_table, update_user_data, get_user_data, get_session_data, \
+    update_session_data
 from keyboards import settings_markup, players_num_markup
 
 bot = Bot(TOKEN)
@@ -24,7 +25,7 @@ async def start_message(message: Message):
 async def change_settings(message: Message):
     s_id = message.chat.id
     await add_new_session(s_id)
-    await update_row(message.from_user.id, 'group_id', s_id)
+    await update_user_data(message.from_user.id, 'group_id', s_id)
     await bot.send_message(message.from_user.id, 'выберите нужные настройки', reply_markup=await settings_markup())
 
 
@@ -37,11 +38,23 @@ async def new_menu(call: CallbackQuery):
 
 @router.callback_query(F.data.startswith('pn'))
 async def change_players_num(call: CallbackQuery):
-    marker, action, num = call.data.split('_')
+    marker, action = call.data.split('_')
+    data = await get_user_data(call.message.chat.id)
+    group_id = data[1]
+    data_2 = await get_session_data(group_id)
+    cur_num = data_2[2]
     if action == 'minus':
-        print()
+        cur_num -= 1
     else:
-        ...
+        cur_num += 1
+
+    if cur_num < DEFAULT_PLAYERS_NUM:
+        cur_num = MAX_PLAYERS_NUM
+    elif cur_num > MAX_PLAYERS_NUM:
+        cur_num = DEFAULT_PLAYERS_NUM
+
+    await update_session_data(group_id, 'players_num', cur_num)
+    await call.message.edit_reply_markup(reply_markup=await players_num_markup(cur_num))
 
 
 @router.callback_query(F.data == 'get-back')

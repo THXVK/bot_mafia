@@ -58,14 +58,26 @@ async def add_new_session(group_id):
     await execute_query('add_new_session', sql_query, (group_id, ))
 
 
-async def get_session_data(session_id: int):
+async def get_session_data(group_id: int):
     sql_query = (
             f'SELECT * '
             f'FROM sessions_data '
-            f'WHERE session_id = {session_id};'
+            f'WHERE group_id = {group_id};'
     )
     row = await execute_query('get_session_data', sql_query)
-    return row
+    return row[0]
+
+
+async def update_session_data(group_id: int, column_name: str, new_value: str | int | None) -> bool:
+
+    sql_query = (
+            f"UPDATE sessions_data "
+            f"SET {column_name} = ? "
+            f"WHERE group_id = ?;"
+    )
+
+    await execute_query('update_user_data', sql_query, (new_value, group_id))
+
 # endregion
 
 
@@ -116,10 +128,10 @@ async def get_user_data(user_id: int):
             f'WHERE user_id = {user_id};'
         )
         row = await execute_query('get_user_data', sql_query)
-        return row
+        return row[0]
 
 
-async def update_row(user_id: int, column_name: str, new_value: str | int | None) -> bool:
+async def update_user_data(user_id: int, column_name: str, new_value: str | int | None) -> bool:
     if await is_user_in_table(user_id):
         sql_query = (
             f"UPDATE users_data "
@@ -127,7 +139,7 @@ async def update_row(user_id: int, column_name: str, new_value: str | int | None
             f"WHERE user_id = ?;"
         )
 
-        await execute_query('update_row', sql_query, (new_value, user_id))
+        await execute_query('update_user_data', sql_query, (new_value, user_id))
         return True
     else:
         return False
