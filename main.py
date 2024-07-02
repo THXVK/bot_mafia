@@ -1,7 +1,7 @@
 import asyncio
 
-from data import create_users_data_table, create_db
-from log import logger
+from data import create_users_data_table, create_db, create_sessions_data_table
+#  from log import logger
 
 from aiogram import Bot, Dispatcher
 from config import TOKEN
@@ -13,11 +13,13 @@ dp = Dispatcher()
 
 
 async def main():
+    await create_db()
+    await create_users_data_table()
+    await create_sessions_data_table()
+
     dp.include_routers(router_1, router_2)
     await dp.start_polling(bot)
 
 
 if __name__ == '__main__':
-    asyncio.run(create_db())
-    asyncio.run(create_users_data_table())
     asyncio.run(main())
