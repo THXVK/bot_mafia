@@ -52,10 +52,10 @@ async def create_sessions_data_table():
 async def add_new_session(group_id):
     sql_query = (
         f"INSERT INTO sessions_data "
-        f"(group_id, players_num, mafias_num, is_started) "
-        f"VALUES (?, {DEFAULT_PLAYERS_NUM}, {DEFAULT_MAFIAS_NUM}, 0);"
+        f"(group_id, players_num, mafias_num, is_started, banned_roles) "
+        f"VALUES (?, {DEFAULT_PLAYERS_NUM}, {DEFAULT_MAFIAS_NUM}, 0, ?);"
     )
-    await execute_query('add_new_session', sql_query, (group_id, ))
+    await execute_query('add_new_session', sql_query, (group_id, ''))
 
 
 async def get_session_data(group_id: int):

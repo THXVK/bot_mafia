@@ -5,7 +5,7 @@ from aiogram.types import Message, CallbackQuery
 from config import TOKEN, DEFAULT_PLAYERS_NUM, MAX_PLAYERS_NUM
 from data import add_new_user, add_new_session, is_user_in_table, update_user_data, get_user_data, get_session_data, \
     update_session_data
-from keyboards import settings_markup, players_num_markup
+from keyboards import settings_markup, players_num_markup, gen_roles_markup
 
 bot = Bot(TOKEN)
 router = Router()
@@ -31,9 +31,16 @@ async def change_settings(message: Message):
 
 @router.callback_query(F.data.startswith('set'))
 async def new_menu(call: CallbackQuery):
-    await call.message.edit_text('выберите число игроков')
-    # todo: данные с бд
-    await call.message.edit_reply_markup(reply_markup=await players_num_markup(DEFAULT_PLAYERS_NUM))
+    if call.data.endswith('players-num'):
+        await call.message.edit_text('выберите число игроков')
+        await call.message.edit_reply_markup(reply_markup=await players_num_markup(DEFAULT_PLAYERS_NUM))
+    elif call.data.endswith('banned-roles'):
+        await call.message.edit_text('исключите нужные роли')
+        await call.message.edit_reply_markup(reply_markup=await gen_roles_markup())
+    elif call.data.endswith('roll-back'):
+        ...
+    else:
+        ...
 
 
 @router.callback_query(F.data.startswith('pn'))
@@ -61,3 +68,25 @@ async def change_players_num(call: CallbackQuery):
 async def change_players_num(call: CallbackQuery):
     await call.message.edit_text('выберите нужные настройки')
     await call.message.edit_reply_markup(reply_markup=await settings_markup())
+
+
+@router.callback_query(F.data.startswith('ban'))
+async def ban_the_role(call: CallbackQuery):
+    role = call.data.split('_')[1]
+    data = await get_user_data(call.message.chat.id)
+    group_id = data[1]
+    data_2 = await get_session_data(group_id)
+    banned_roles_str = data_2[5]
+    banned_roles_list = banned_roles_str.split(', ')
+
+    if role not in banned_roles_list:
+        banned_roles_str += ', ' + role
+        banned_roles_list = banned_roles_str.split(', ')
+    else:
+        banned_roles_list.remove(role)
+        banned_roles_str = ', '.join(banned_roles_list)
+
+    await update_session_data(group_id, 'banned_roles', banned_roles_str)
+    await call.message.edit_reply_markup(reply_markup=await gen_roles_markup(banned_roles_list))
+
+
