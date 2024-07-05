@@ -2,7 +2,7 @@ from aiogram import F, Router, Bot
 from aiogram.filters import Command, CommandStart
 from aiogram.types import Message, CallbackQuery
 
-from config import TOKEN, DEFAULT_PLAYERS_NUM, MAX_PLAYERS_NUM
+from config import TOKEN, DEFAULT_PLAYERS_NUM, MAX_PLAYERS_NUM, DEFAULT_MAFIAS_NUM
 from data import add_new_user, add_new_session, is_user_in_table, update_user_data, get_user_data, get_session_data, \
     update_session_data
 from keyboards import settings_markup, players_num_markup, gen_roles_markup
@@ -38,7 +38,19 @@ async def new_menu(call: CallbackQuery):
         await call.message.edit_text('исключите нужные роли')
         await call.message.edit_reply_markup(reply_markup=await gen_roles_markup())
     elif call.data.endswith('roll-back'):
-        ...
+        await call.message.edit_text('.')
+        data = await get_user_data(call.message.chat.id)
+        group_id = data[1]
+        await call.message.edit_text('..')
+
+        await update_session_data(group_id, 'players_num', DEFAULT_PLAYERS_NUM)
+        await call.message.edit_text('...')
+        await update_session_data(group_id, 'mafias_num', DEFAULT_MAFIAS_NUM)
+        await call.message.edit_text('сброшено!')
+        await update_session_data(group_id, 'banned_roles', '')
+
+        await call.message.edit_text('выберите нужные настройки')
+        await call.message.edit_reply_markup(reply_markup=await settings_markup())
     else:
         ...
 
