@@ -46,16 +46,17 @@ async def create_sessions_data_table():
         "is_started INTEGER, "
         "banned_roles TEXT);"
     )
-    await execute_query('create_users_data_table', sql_query)
+    await execute_query('create_sessions_data_table', sql_query)
 
 
 async def add_new_session(group_id):
-    sql_query = (
-        f"INSERT INTO sessions_data "
-        f"(group_id, players_num, mafias_num, is_started, banned_roles) "
-        f"VALUES (?, {DEFAULT_PLAYERS_NUM}, {DEFAULT_MAFIAS_NUM}, 0, ?);"
-    )
-    await execute_query('add_new_session', sql_query, (group_id, ''))
+    if not await is_session_in_table(group_id):
+        sql_query = (
+            f"INSERT INTO sessions_data "
+            f"(group_id, players_num, mafias_num, is_started, banned_roles) "
+            f"VALUES (?, {DEFAULT_PLAYERS_NUM}, {DEFAULT_MAFIAS_NUM}, 0, ?);"
+        )
+        await execute_query('add_new_session', sql_query, (group_id, ''))
 
 
 async def get_session_data(group_id: int):
@@ -68,16 +69,25 @@ async def get_session_data(group_id: int):
     return row[0]
 
 
-async def update_session_data(group_id: int, column_name: str, new_value: str | int | None) -> bool:
+async def update_session_data(group_id: int, column_name: str, new_value: str | int | None):
+    if await is_session_in_table(group_id):
+        sql_query = (
+                f"UPDATE sessions_data "
+                f"SET {column_name} = ? "
+                f"WHERE group_id = ?;"
+        )
 
+        await execute_query('update_session_data', sql_query, (new_value, group_id))
+
+
+async def is_session_in_table(group_id: int) -> bool:
     sql_query = (
-            f"UPDATE sessions_data "
-            f"SET {column_name} = ? "
-            f"WHERE group_id = ?;"
+        'SELECT * '
+        'FROM sessions_data '
+        'WHERE group_id = ?;'
     )
 
-    await execute_query('update_user_data', sql_query, (new_value, group_id))
-
+    return bool(await execute_query('is_session_in_table', sql_query, (group_id,)))
 # endregion
 
 

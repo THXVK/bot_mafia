@@ -31,28 +31,33 @@ async def change_settings(message: Message):
 
 @router.callback_query(F.data.startswith('set'))
 async def new_menu(call: CallbackQuery):
+    data = await get_user_data(call.message.chat.id)
+    group_id = data[1]
+
     if call.data.endswith('players-num'):
         await call.message.edit_text('выберите число игроков')
         await call.message.edit_reply_markup(reply_markup=await players_num_markup(DEFAULT_PLAYERS_NUM))
+
     elif call.data.endswith('banned-roles'):
         await call.message.edit_text('исключите нужные роли')
         await call.message.edit_reply_markup(reply_markup=await gen_roles_markup())
+
     elif call.data.endswith('roll-back'):
         await call.message.edit_text('.')
-        data = await get_user_data(call.message.chat.id)
-        group_id = data[1]
-        await call.message.edit_text('..')
-
         await update_session_data(group_id, 'players_num', DEFAULT_PLAYERS_NUM)
-        await call.message.edit_text('...')
+        await call.message.edit_text('..')
         await update_session_data(group_id, 'mafias_num', DEFAULT_MAFIAS_NUM)
-        await call.message.edit_text('сброшено!')
+        await call.message.edit_text('...')
         await update_session_data(group_id, 'banned_roles', '')
+        await call.message.edit_text('сброшено!')
 
         await call.message.edit_text('выберите нужные настройки')
         await call.message.edit_reply_markup(reply_markup=await settings_markup())
+
     else:
-        ...
+        await update_session_data(group_id, 'is_started', 1)
+        await bot.send_message(group_id, 'игра началась. Чтобы присоединиться, напишите /join')
+        await call.message.edit_text('игра начинается!')  # отслеживание количества игроков
 
 
 @router.callback_query(F.data.startswith('pn'))
