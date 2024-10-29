@@ -2,6 +2,8 @@ import sqlite3
 from config import DB_NAME, DEFAULT_MAFIAS_NUM, DEFAULT_PLAYERS_NUM
 from log import logger
 
+# todo: проверка на время подбора
+# todo: отмена подбора
 
 # region python_data
 # endregion
@@ -44,7 +46,9 @@ async def create_sessions_data_table():
         "players_num INTEGER, "
         "mafias_num INTEGER, "
         "is_started INTEGER, "
-        "banned_roles TEXT);"
+        "banned_roles TEXT, "
+        "message_counter INTEGER, "
+        "message_chat_id INTEGER);"
     )
     await execute_query('create_sessions_data_table', sql_query)
 
@@ -53,8 +57,8 @@ async def add_new_session(group_id):
     if not await is_session_in_table(group_id):
         sql_query = (
             f"INSERT INTO sessions_data "
-            f"(group_id, players_num, mafias_num, is_started, banned_roles) "
-            f"VALUES (?, {DEFAULT_PLAYERS_NUM}, {DEFAULT_MAFIAS_NUM}, 0, ?);"
+            f"(group_id, players_num, mafias_num, is_started, banned_roles, message_counter, message_chat_id) "
+            f"VALUES (?, {DEFAULT_PLAYERS_NUM}, {DEFAULT_MAFIAS_NUM}, 0, ?, 0, 0);"
         )
         await execute_query('add_new_session', sql_query, (group_id, ''))
 
@@ -155,10 +159,11 @@ async def update_user_data(user_id: int, column_name: str, new_value: str | int 
         return False
 
 
-async def get_table_data():
+async def get_table_data(value_name, value):
     sql_query = (
         f'SELECT * '
-        f'FROM users_data;'
+        f'FROM users_data '
+        f'WHERE {value_name} = {value};'
     )
     res = await execute_query('get_table_data', sql_query)
     if not res:
