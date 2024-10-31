@@ -1,11 +1,15 @@
-from aiogram import Router
+import asyncio
+
+from aiogram import Router, Bot
 from aiogram.filters import Command, CommandStart
 from aiogram.types import Message
 from bot import change_settings, message_counter
+from config import TOKEN
 from data import add_new_user, is_user_in_table, get_session_data, is_session_in_table, get_user_data, update_user_data, \
     get_table_data
 
-from keyboards import settings_markup
+
+bot = Bot(TOKEN)
 router = Router()
 
 
@@ -50,13 +54,30 @@ async def join_register(message: Message):
                     num_upd = len(data_2_upd)
                     await message_counter(group_id, num_upd)
                 elif num == max_num:
-                    await message.answer('**начало игры**')
 
-
-                    ...
-
+                    await start_sending_vote_message(message)
 
                 else:
                     await message.reply('достигнут предел игроков')
     else:
         await message.reply('напиши мне в лс команду "/start"')
+
+
+async def start_sending_vote_message(group_id):
+
+    await bot.send_message(group_id, 'это ваш ознакомительный день в городе, сегодня вы сможете только пообщаться')
+    await bot.send_message(group_id, 'через 5 минут наступит ночь')
+    await asyncio.sleep(300)
+    await send_vote_message(group_id)
+
+
+async def send_night_message(group_id):
+    await bot.send_message(group_id, 'город засыпает, просыпается мафия!')
+
+
+async def send_vote_message(group_id, dead_p: str | None = None):
+    await bot.send_message(group_id, 'город просыпается!')
+    if dead_p:
+        await bot.send_message(group_id, f'сегодня ночью был убит {dead_p}, вам нужно решить, чья это вина')
+    else:
+        await bot.send_message(group_id, 'сегодня ночью никто не пострадал')

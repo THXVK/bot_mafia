@@ -34,3 +34,11 @@ async def gen_roles_markup(banned_roles_list: list | None = []):
         [InlineKeyboardButton(text='<-', callback_data='get-back')]
     ])
     return markup
+
+
+async def gen_vote_markup(players_list):
+    markup = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text=f'{name}', callback_data=f'vote-for_{name}')] for name in players_list
+    ])
+
+    return markup
