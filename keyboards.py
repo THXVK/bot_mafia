@@ -42,3 +42,8 @@ async def gen_vote_markup(players_list):
     ])
 
     return markup
+
+
+async def gen_vics_markup():
+    ...
+

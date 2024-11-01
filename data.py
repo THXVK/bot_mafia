@@ -111,15 +111,15 @@ async def create_users_data_table():
     await execute_query('create_users_data_table', sql_query)
 
 
-async def add_new_user(session_id: int, user_id: int, chat_id: int) -> bool:
+async def add_new_user(session_id: int, user_id: int) -> bool:
     if not await is_user_in_table(user_id):
         sql_query = (
             "INSERT INTO users_data "
             "(group_id, user_id, is_alive, role, is_vip) "
-            "VALUES (?, ?, 0, ?, 0, ?);"
+            "VALUES (?, ?, 0, ?, 0);"
         )
 
-        await execute_query('add_new_user', sql_query, (session_id, user_id, 'guest', chat_id))
+        await execute_query('add_new_user', sql_query, (session_id, user_id, 'guest'))
         return True
     else:
         return False
@@ -170,4 +170,17 @@ async def get_table_data(value_name, value):
     if not res:
         res = []
     return res
+
+
+async def get_table_data_2(value_name_1, value_1, value_name_2, value_2):
+    sql_query = (
+        f'SELECT user_id '
+        f'FROM users_data '
+        f'WHERE {value_name_1} = {value_1} AND {value_name_2} = {value_2}'
+    )
+    res = await execute_query('get_table_data_2', sql_query)
+    if not res:
+        res = []
+    return res
+
 # endregion

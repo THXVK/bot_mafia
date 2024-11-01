@@ -3,11 +3,11 @@ import asyncio
 from aiogram import Router, Bot
 from aiogram.filters import Command, CommandStart
 from aiogram.types import Message
-from bot import change_settings, message_counter
+from bot import change_settings, message_counter, send_vics_list
 from config import TOKEN
-from data import add_new_user, is_user_in_table, get_session_data, is_session_in_table, get_user_data, update_user_data, \
-    get_table_data
-
+from data import (add_new_user, is_user_in_table, get_session_data, is_session_in_table, get_user_data,
+                  update_user_data, get_table_data, get_table_data_2)
+from keyboards import gen_vics_markup
 
 bot = Bot(TOKEN)
 router = Router()
@@ -68,11 +68,14 @@ async def start_sending_vote_message(group_id):
     await bot.send_message(group_id, 'это ваш ознакомительный день в городе, сегодня вы сможете только пообщаться')
     await bot.send_message(group_id, 'через 5 минут наступит ночь')
     await asyncio.sleep(300)
-    await send_vote_message(group_id)
+    await send_night_message(group_id)
 
 
 async def send_night_message(group_id):
     await bot.send_message(group_id, 'город засыпает, просыпается мафия!')
+    mafias_list = await get_table_data_2('group_id', group_id, 'role', 'мафия')
+    for user_id in mafias_list:
+        await send_vics_list(user_id)
 
 
 async def send_vote_message(group_id, dead_p: str | None = None):
@@ -81,3 +84,6 @@ async def send_vote_message(group_id, dead_p: str | None = None):
         await bot.send_message(group_id, f'сегодня ночью был убит {dead_p}, вам нужно решить, чья это вина')
     else:
         await bot.send_message(group_id, 'сегодня ночью никто не пострадал')
+
+    await bot.send_message(group_id, 'у вас есть 4 минуты, чтобы высказать свои подозрения')
+    await asyncio.sleep(240)

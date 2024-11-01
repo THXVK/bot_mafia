@@ -5,7 +5,7 @@ from aiogram.types import Message, CallbackQuery
 from config import TOKEN, DEFAULT_PLAYERS_NUM, MAX_PLAYERS_NUM, DEFAULT_MAFIAS_NUM
 from data import add_new_user, add_new_session, is_user_in_table, update_user_data, get_user_data, get_session_data, \
     update_session_data, get_table_data
-from keyboards import settings_markup, players_num_markup, gen_roles_markup
+from keyboards import settings_markup, players_num_markup, gen_roles_markup, gen_vics_markup
 
 bot = Bot(TOKEN)
 router = Router()
@@ -14,12 +14,15 @@ router = Router()
 @router.message(CommandStart())
 async def start_message(message: Message):
     if not await is_user_in_table(message.chat.id):
-        await add_new_user(-1, message.from_user.id)
+        await add_new_user(-1, message.from_user.id, message.chat.id)
         await message.answer('добро пожаловать!')
         await message.answer('чтобы начать игру добавьте меня в группу и сделайте админом, '
                              'напишите /start_game и игра начнется')
     else:
         await message.answer('вы уже в базе')
+
+
+# region admin_messages
 
 
 async def change_settings(message: Message):
@@ -71,7 +74,7 @@ async def new_menu(call: CallbackQuery):
         data = await get_session_data(group_id)
 
 
-async def message_counter(group_id, num):
+async def message_counter(group_id, num):  # обновляет сообщение с числом игроков
     data = await get_session_data(group_id)
     message_id = data[6]
     chat_id = data[7]
@@ -124,4 +127,15 @@ async def ban_the_role(call: CallbackQuery):
     await update_session_data(group_id, 'banned_roles', banned_roles_str)
     await call.message.edit_reply_markup(reply_markup=await gen_roles_markup(banned_roles_list))
 
+# endregion admin_messages
+
+# region player_messages
+
+
+async def send_vics_list(user_id):
+    await bot.send_message(user_id, 'выбери жертву вместе с остальными', reply_markup=await gen_vics_markup())
+
+
+
+# endregion player_messages
 
